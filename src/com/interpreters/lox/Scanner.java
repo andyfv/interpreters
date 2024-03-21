@@ -46,11 +46,36 @@ public class Scanner {
             case '+': addToken(PLUS); break;
             case ';': addToken(SEMICOLON); break;
             case '*': addToken(STAR); break;
+            case '!':
+                addToken(match('=') ? BANG_EQUAL      : BANG);
+                break;
+            case '=':
+                addToken(match('=') ? EQUAL_EQUAL     : EQUAL);
+                break;
+            case '<':
+                addToken(match('=') ? LESS_EQUAL      : LESS);
+                break;
+            case '>':
+                addToken(match('=') ? GREATER_EQUAL   : GREATER);
+                break;
 
             default:
                 Lox.error(line, "Unexpected character.");
                 break;
         }
+    }
+
+    /* We use match() to recognize characters in two stages.
+    If for example we recognize '!' then we know that the lexeme
+    starts with '!'. Then we look ahead at the next character to determine
+    if we have '!=' or just '!'.
+    * */
+    private boolean match(char expected) {
+        if (isAtEnd()) return false;
+        if (source.charAt(current) != expected) return false;
+
+        current++;
+        return true;
     }
 
     /* Check if the end of the line is reached */
