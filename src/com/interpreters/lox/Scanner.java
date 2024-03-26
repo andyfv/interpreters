@@ -58,6 +58,16 @@ public class Scanner {
             case '>':
                 addToken(match('=') ? GREATER_EQUAL   : GREATER);
                 break;
+            case '/':
+                /* We need additional handling because the SLASH operator
+                * is also used for comments and also for division*/
+                if (match('/')) {
+                    // A comment goes until the end of the line.
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                } else {
+                addToken(SLASH);
+                }
+                break;
 
             default:
                 Lox.error(line, "Unexpected character.");
@@ -67,8 +77,9 @@ public class Scanner {
 
     /* We use match() to recognize characters in two stages.
     If for example we recognize '!' then we know that the lexeme
-    starts with '!'. Then we look ahead at the next character to determine
-    if we have '!=' or just '!'.
+    starts with '!'. Then we check the next character to determine
+    if we have '!=' or just '!'. If the char we expect is there we consume
+    it by moving the current index
     * */
     private boolean match(char expected) {
         if (isAtEnd()) return false;
@@ -76,6 +87,13 @@ public class Scanner {
 
         current++;
         return true;
+    }
+
+    /* Lookahead without consuming the next character.
+    * */
+    private char peek() {
+        if (isAtEnd()) return '\0';
+        return source.charAt(current);
     }
 
     /* Check if the end of the line is reached */
