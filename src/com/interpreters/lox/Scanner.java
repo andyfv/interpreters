@@ -69,10 +69,32 @@ public class Scanner {
                 }
                 break;
 
+            case '"': string(); break;
+
             default:
                 Lox.error(line, "Unexpected character.");
                 break;
         }
+    }
+
+    // Handle string literals
+    private void string() {
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n') line++; // handle multi-line strings
+            advance();
+        }
+
+        if (isAtEnd()) {
+            Lox.error(line, "Unterminated string.");
+            return;
+        }
+
+        // Consume the closing quotes
+        advance();
+
+        // Trim the quotes at the start and the end
+        String value = source.substring(start + 1, current - 1);
+        addToken(STRING, value);
     }
 
     /* We use match() to recognize characters in two stages.
