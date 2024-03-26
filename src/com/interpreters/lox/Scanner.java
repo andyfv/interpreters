@@ -60,9 +60,8 @@ public class Scanner {
                 break;
             case '/':
                 /* We need additional handling because the SLASH operator
-                * is also used for comments and also for division*/
-                if (match('/')) {
-                    // A comment goes until the end of the line.
+                * is used for comments and also for division*/
+                if (match('/')) { // A comment goes until the end of the line.
                     while (peek() != '\n' && !isAtEnd()) advance();
                 } else {
                 addToken(SLASH);
