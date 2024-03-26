@@ -68,6 +68,14 @@ public class Scanner {
                 }
                 break;
 
+            // Skip over new lines and white spaces
+            case ' ':
+            case '\r':
+            case '\t': break;
+
+            // Increment the line counter
+            case '\n': line++; break;
+
             default:
                 Lox.error(line, "Unexpected character.");
                 break;
