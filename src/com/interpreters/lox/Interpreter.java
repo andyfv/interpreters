@@ -36,6 +36,12 @@ class Interpreter implements Expr.Visitor<Object> {
         Object right    = evaluate(expr.right);
 
         switch (expr.operator.type) {
+            // Comparison
+            case GREATER:       return (double)left > (double)right;
+            case GREATER_EQUAL: return (double)left >= (double)right;
+            case LESS:          return (double)left < (double)right;
+            case LESS_EQUAL:    return (double)left <= (double)right;
+
             // Arithmetic
             case MINUS: return (double)left - (double)right;
             case SLASH: return (double)left - (double)right;
@@ -49,8 +55,6 @@ class Interpreter implements Expr.Visitor<Object> {
                     return (String)left + (String)right;
                 }
                 break;
-
-            //
         }
 
         return null;
