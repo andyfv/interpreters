@@ -16,11 +16,18 @@ class Interpreter implements Expr.Visitor<Object> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
+            case BANG: return !isTruthy(right);
             // dynamically (at runtime) cast the expression if it is a number
             case MINUS: return -(double)right;
         }
 
         return null;
+    }
+
+    private boolean isTruthy(Object object) {
+        if (object == null) return false;
+        if (object instanceof Boolean) return (boolean)object;
+        return true;
     }
 
     @Override
