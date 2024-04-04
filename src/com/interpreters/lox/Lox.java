@@ -11,6 +11,7 @@ import java.util.List;
 import com.interpreters.lox.Scanner;
 
 public class Lox {
+    private static final Interpreter interpreter = new Interpreter();
     static boolean hadError         = false;
     static boolean hadRuntimeError  = false;
 
@@ -45,7 +46,7 @@ public class Lox {
         Expr expression     = parser.parse();
 
         if (hadError) return;
-        System.out.println(new AstPrinter().print(expression));
+        interpreter.interpret(expression);
     }
 
     private static void runFile(String path) throws IOException {
