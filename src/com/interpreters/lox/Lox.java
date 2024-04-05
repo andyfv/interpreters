@@ -40,13 +40,13 @@ public class Lox {
     }
 
     private static void run(String source) {
-        Scanner scanner     = new Scanner(source);
-        List<Token> tokens  = scanner.scanTokens();
-        Parser parser       = new Parser(tokens);
-        Expr expression     = parser.parse();
+        Scanner scanner         = new Scanner(source);
+        List<Token> tokens      = scanner.scanTokens();
+        Parser parser           = new Parser(tokens);
+        List<Stmt> statements   = parser.parse();
 
         if (hadError) return;
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
     }
 
     private static void runFile(String path) throws IOException {
