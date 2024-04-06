@@ -19,18 +19,23 @@ itself again, and again, and again until we get a stack overflow.
 
 Grammar(ordered from the least to higher precedence, e.g. top-down parser):
 ===========================================================
-program     -> statement* EOF;
+program     -> declaration* EOF ;
+declaration -> varDecl | statement ;
+varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
 statement   -> exprStmt | printStmt
-exprStmt    -> expression ";";
-printStmt   -> "print" expression ";";
+exprStmt    -> expression ";" ;
+printStmt   -> "print" expression ";" ;
 
 expression  -> equality ;
 equality    -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison  -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term        -> factor ( ( "-" | "+" ) factor )* ;
 factor      -> unary ( ( "/" | "*" ) unary )* ;
-unary       -> ( "!" | "-" ) unary
-primary     -> NUMBER | STRING | "true"
+unary       -> ( "!" | "-" ) unary ;
+primary     -> "true" | "false" | "nil"
+             | NUMBER | STRING |
+             | "(" expression ")"
+             | IDENTIFIER;
 ===========================================================
 
 @tokens     list of tokens
