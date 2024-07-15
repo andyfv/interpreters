@@ -5,6 +5,10 @@ import java.util.List;
 class Interpreter implements    Expr.Visitor<Object>,
                                 Stmt.Visitor<Void> {
 
+    /*
+    @environment - stored as a field so that the variables in the environment
+                    stay in memory as long as the interpreter is running.
+    */
     private Environment environment = new Environment();
 
     void interpret(List<Stmt> statements) {
@@ -32,6 +36,13 @@ class Interpreter implements    Expr.Visitor<Object>,
 
     // Visit Methods
 
+
+    /*
+    * Variable declaration
+    *
+    * IF the variable has an initializer - evaluate it.
+    * IF NOT, set the variable to nil (null in Java).
+    * */
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = null;
@@ -44,6 +55,17 @@ class Interpreter implements    Expr.Visitor<Object>,
         return null;
     }
 
+    //
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
+    }
+
+    /*
+    * Variable expression7
+    * */
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
         return environment.get(expr.name);
@@ -87,13 +109,6 @@ class Interpreter implements    Expr.Visitor<Object>,
         return null;
     }
 
-
-    @Override
-    public Object visitAssignExpr(Expr.Assign expr) {
-        Object value = evaluate(expr.value);
-        environment.assign(expr.name, value);
-        return value;
-    }
 
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
