@@ -202,4 +202,24 @@ class Interpreter implements    Expr.Visitor<Object>,
     private void execute(Stmt stmt) {
         stmt.accept(this);
     }
+
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;    // Hold on to the outer scope
+        try {
+            this.environment = environment;         // Enter the inner scope
+
+            for (Stmt statement: statements) {      // Execute the statements
+                execute(statement);                 // in the inner scope
+            }
+        } finally {
+            this.environment = previous;            // Exit the inner scope and
+                                                    // return to the previous scope
+        }
+    }
 }
