@@ -22,7 +22,7 @@ Grammar(ordered from the least to higher precedence, e.g. top-down parser):
 program     -> declaration* EOF ;
 declaration -> varDecl | statement ;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement   -> exprStmt | printStmt | block ;
+statement   -> exprStmt | ifStmt | printStmt | block ;
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
 block       -> "{" declaration* "}" ;
@@ -62,10 +62,25 @@ public class Parser {
     }
 
     private Stmt statement() {
+        if(match(IF))           return ifStatement();
         if(match(PRINT))        return printStatement();
         if(match(LEFT_BRACE))   return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+    private Stmt ifStatement() {
+        consume(LEFT_PAREN, "Expect '(' after if.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     private Stmt printStatement() {
@@ -86,7 +101,7 @@ public class Parser {
             statements.add(declaration());
         }
 
-        consume(RIGHT_BRACE, "Expext '}' after block.");
+        consume(RIGHT_BRACE, "Expect '}' after block.");
         return statements;
     }
 
@@ -146,7 +161,7 @@ public class Parser {
         Expr expr = comparison();
 
         /* For each iteration store the resulting expression into the
-        @expr variable. Thus we create a left-associative nested tree
+        @expr variable. Thus, we create a left-associative nested tree
         of Binary operator nodes. The previous @expr is the left operand.
         * */
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
