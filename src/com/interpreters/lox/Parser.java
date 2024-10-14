@@ -17,7 +17,7 @@ Note: This is why left recursion is problematic for recursive descent.
 The function for a left-recursive rule immediately calls itself, which calls
 itself again, and again, and again until we get a stack overflow.
 
-Grammar(ordered from the least to higher precedence, e.g. top-down parser):
+Grammar(ordered from the least to the highest precedence, e.g. top-down parser):
 ===========================================================
 program     -> declaration* EOF ;
 declaration -> varDecl | statement ;
@@ -29,7 +29,9 @@ block       -> "{" declaration* "}" ;
 
 expression  -> assignment ;
 assignment  -> IDENTIFIER "=" assignment
-             | equality ;
+             | logic_or ;
+logic_or    -> logic_and ( "or" logic_and )* ;
+logic_and   -> equality ( "and" equality)* ;
 equality    -> comparison ( ( "!=" | "==" ) comparison )* ;
 comparison  -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term        -> factor ( ( "-" | "+" ) factor )* ;
@@ -140,7 +142,7 @@ public class Parser {
     // Binary operators
 
     private Expr assignment() {
-        Expr expr = equality();
+        Expr expr = or();
 
         if (match(EQUAL)) {
             Token   equals  = previous();
@@ -152,6 +154,30 @@ public class Parser {
             }
 
             error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr or() {
+        Expr expr = and();
+
+        while (match(OR)) {
+            Token operator  = previous();
+            Expr right      = and();
+            expr            = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr and() {
+        Expr expr = equality();
+
+        while (match(AND)) {
+            Token operator  = previous();
+            Expr right      = equality();
+            expr            = new Expr.Logical(expr, operator, right);
         }
 
         return expr;
