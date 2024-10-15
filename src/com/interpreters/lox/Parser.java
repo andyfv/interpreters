@@ -1,6 +1,7 @@
 package com.interpreters.lox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import static com.interpreters.lox.TokenType.*;
 
@@ -20,9 +21,20 @@ itself again, and again, and again until we get a stack overflow.
 Grammar(ordered from the least to the highest precedence, e.g. top-down parser):
 ===========================================================
 program     -> declaration* EOF ;
-declaration -> varDecl | statement ;
+declaration -> varDecl
+             | statement
+             ;
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
-statement   -> exprStmt | ifStmt | printStmt | whileStmt | block ;
+statement   -> exprStmt
+             | forStmt
+             | ifStmt
+             | printStmt
+             | whileStmt
+             | block
+             ;
+forStmt     -> "for" "(" ( varDecl | exprStmt | ";" )
+                expression? ";"
+                expression? ")" statement ;
 whileStmt   -> "while" "(" expression ")" statement ;
 exprStmt    -> expression ";" ;
 printStmt   -> "print" expression ";" ;
@@ -30,7 +42,8 @@ block       -> "{" declaration* "}" ;
 
 expression  -> assignment ;
 assignment  -> IDENTIFIER "=" assignment
-             | logic_or ;
+             | logic_or
+             ;
 logic_or    -> logic_and ( "or" logic_and )* ;
 logic_and   -> equality ( "and" equality)* ;
 equality    -> comparison ( ( "!=" | "==" ) comparison )* ;
@@ -38,10 +51,13 @@ comparison  -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term        -> factor ( ( "-" | "+" ) factor )* ;
 factor      -> unary ( ( "/" | "*" ) unary )* ;
 unary       -> ( "!" | "-" ) unary ;
-primary     -> "true" | "false" | "nil"
+primary     -> "true"
+             | "false"
+             | "nil"
              | NUMBER | STRING |
              | "(" expression ")"
-             | IDENTIFIER;
+             | IDENTIFIER
+             ;
 ===========================================================
 
 @tokens     list of tokens
@@ -65,12 +81,70 @@ public class Parser {
     }
 
     private Stmt statement() {
+        if(match(FOR))          return forStatement();
         if(match(IF))           return ifStatement();
         if(match(PRINT))        return printStatement();
         if(match(WHILE))        return whileStatement();
         if(match(LEFT_BRACE))   return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+    /* For Loop (C-style for loop)
+    Example: for (initializer; condition; increment) body
+
+    How it works:
+        Basically we desugar the for loop to a while loop. We don't add a new syntax tree node.
+        Instead, we reuse the Stmt.While syntax tree node.
+    * */
+    private Stmt forStatement() {
+        // Parse the opening parenthesis
+        consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+        // Parse the initializer clause
+        Stmt initializer;
+        if (match(SEMICOLON)) {                     // If the initializer has been omitted
+            initializer = null;
+        } else if (match(VAR)) {                    // If there is a variable declaration
+            initializer = varDeclaration();
+        } else {
+            initializer = expressionStatement();    // Otherwise we parse an expression
+        }
+
+        // Parse the condition
+        Expr condition = null;
+        if (!check(SEMICOLON)) {
+            condition = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after loop condition.");
+
+        // Parse the increment
+        Expr increment = null;
+        if (!check(RIGHT_PAREN)) {
+            increment = expression();
+        }
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        // Parse the body
+        Stmt body = statement();
+
+        // Add the increment at the end of the body
+        if (increment != null) {
+            body = new Stmt.Block( Arrays.asList(body
+                                , new Stmt.Expression(increment)
+                                ));
+        }
+
+        // Construct a while loop using the condition cause and the body
+        if (condition == null) condition = new Expr.Literal(true);
+        body = new Stmt.While(condition, body);
+
+        // Add the initializer at the start of body
+        if (initializer != null) {
+            body = new Stmt.Block(Arrays.asList(initializer, body));
+        }
+
+        return body;
     }
 
     private Stmt ifStatement() {
