@@ -21,9 +21,13 @@ itself again, and again, and again until we get a stack overflow.
 Grammar(ordered from the least to the highest precedence, e.g. top-down parser):
 ===========================================================
 program     -> declaration* EOF ;
-declaration -> varDecl
+declaration -> funDecl
+             | varDecl
              | statement
              ;
+dunDecl     -> "fun" function ;
+function    -> IDENTIFIER "(" parameters? ")" block ;           // IDENTIFIER is the name of the function
+parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;                 // IDENTIFIER is a name for optional one or more parameters
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
 statement   -> exprStmt
              | forStmt
@@ -175,6 +179,30 @@ public class Parser {
         return new Stmt.Expression(expr);
     }
 
+    private Stmt.Function function(String kind) {
+        // Parse the function name
+        Token name = consume(IDENTIFIER, "Expext " + kind + " name.");
+
+        // Parse the parameters
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255){
+                    error(peek(), "Can't have more than 255 parameters");
+                }
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters");
+
+        // Parse the function body
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+
+        return new Stmt.Function(name, parameters, body);
+    }
+
     private List<Stmt> block() {
         List<Stmt> statements = new ArrayList<>();
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
@@ -191,6 +219,7 @@ public class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(FUN)) return function("function");
             if (match(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError error) {
