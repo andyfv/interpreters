@@ -1,3 +1,5 @@
-print "one";
-print "true";
-print 2 + 1;
+fun sayHi(first, last) {
+    print "Hi, " + first + " " + last + "!";
+}
+
+sayHi("Dear", "Reader");
