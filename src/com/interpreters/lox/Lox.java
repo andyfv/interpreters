@@ -46,13 +46,8 @@ public class Lox {
         List<Stmt>  statements  = parser.parse();
 
         if (hadError) return;
-        for (Stmt statement : statements) {
-            if (statement instanceof Stmt.Expression) {
-                interpreter.visitPrintStmt(new Stmt.Print(((Stmt.Expression) statement).expression));
-            } else {
-                interpreter.interpret(statements);
-            }
-        }
+
+        interpreter.interpret(statements);
     }
 
     private static void runFile(String path) throws IOException {
