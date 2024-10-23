@@ -32,14 +32,14 @@ public class GenerateAst {
                 "Function   : Token name, List<Token> params, List<Stmt> body",
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
                 "Print      : Expr expression",
+                "Return     : Token keyword, Expr value",
                 "While      : Expr condition, Stmt body",
                 "Var        : Token name, Expr initializer"
         ));
     }
 
-    private static void defineAst(
-        String outputDir, String baseName, List<String> types)
-        throws IOException {
+    // Create Stmt.java or Expr.java file with the equivalent classes
+    private static void defineAst(String outputDir, String baseName, List<String> types) throws IOException {
         String      path    = outputDir + "/" + baseName + ".java";
         PrintWriter writer  = new PrintWriter(path, "UTF-8");
 
@@ -75,21 +75,18 @@ public class GenerateAst {
         writer.println("    }");
     }
 
-    private static void defineType(
-            PrintWriter writer, String baseName,
-            String className, String fieldList) {
+    private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
         // Define class
         writer.println("  static class " + className + " extends " + baseName + " {");
 
-        // Fields
+        // Define fields
         String[] fields = fieldList.split(", ");
-
         writer.println();
         for (String field : fields) {
             writer.println("    final " + field + ";");
         }
 
-        // Constructor
+        // Define constructor
         writer.println("    " + className + "(" + fieldList + ") {");
 
         // Store parameters in fields

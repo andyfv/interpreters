@@ -9,6 +9,7 @@ class LoxFunction implements LoxCallable {
         this.declaration = declaration;
     }
 
+    // Returns null in case the function doesn't return anything
     @Override
     public Object call (Interpreter interpreter, List<Object> arguments) {
         Environment environment = new Environment(interpreter.globals);
@@ -18,7 +19,13 @@ class LoxFunction implements LoxCallable {
                                 arguments.get(i));
         }
 
-        interpreter.executeBlock(declaration.body, environment);
+        // Catch a 'return' statement from the function call
+        try {
+            interpreter.executeBlock(declaration.body, environment);
+        } catch (Return returnValue) {
+            return returnValue.value;
+        }
+
         return null;
     }
 
