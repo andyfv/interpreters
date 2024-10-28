@@ -37,7 +37,6 @@ statement   -> exprStmt
              | whileStmt
              | block
              ;
-s
 exprStmt    -> expression ";" ;
 forStmt     -> "for" "(" ( varDecl | exprStmt | ";" )
                 expression? ";"
@@ -198,7 +197,10 @@ public class Parser {
     private Stmt.Function function(String kind) {
         // Parse the function name
         Token name = consume(IDENTIFIER, "Expext " + kind + " name.");
+        return new Stmt.Function(name, functionBody(kind));
+    }
 
+    private Expr.Function functionBody(String kind) {
         // Parse the parameters
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
         List<Token> parameters = new ArrayList<>();
@@ -216,7 +218,7 @@ public class Parser {
         consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
         List<Stmt> body = block();
 
-        return new Stmt.Function(name, parameters, body);
+        return new Expr.Function(parameters, body);
     }
 
     private List<Stmt> block() {
@@ -235,13 +237,22 @@ public class Parser {
 
     private Stmt declaration() {
         try {
-            if (match(FUN)) return function("function");
+            if (check(FUN) && checkNext(IDENTIFIER))  {
+                consume(FUN, null);
+                return function("function");
+            }
             if (match(VAR)) return varDeclaration();
             return statement();
         } catch (ParseError error) {
             synchronize();
             return null;
         }
+    }
+
+    private boolean checkNext(TokenType tokenType) {
+        if (isAtEnd()) return false;
+        if (tokens.get(current + 1).type == EOF) return false;
+        return tokens.get(current + 1).type == tokenType;
     }
 
     private Stmt varDeclaration() {
@@ -420,6 +431,7 @@ public class Parser {
 
     // Parsing terminals
     private Expr primary() {
+        if (match(FUN))             return functionBody("function");
         if (match(FALSE))           return new Expr.Literal(false);
         if (match(TRUE))            return new Expr.Literal(true);
         if (match(NIL))             return new Expr.Literal(null);
@@ -454,6 +466,8 @@ public class Parser {
         throw error(peek(), message);
     }
 
+
+    // Check the type TokenType of the 'current' against the TokenType passed as an argument
     private boolean check(TokenType type) {
         if (isAtEnd()) return false;
         return peek().type == type;
