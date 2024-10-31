@@ -1,5 +1,7 @@
 package com.interpreters.lox;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -10,8 +12,9 @@ class Interpreter implements    Expr.Visitor<Object>,
     @environment - stored as a field so that the variables in the environment
                     stay in memory as long as the interpreter is running.
     */
-    final Environment globals = new Environment();
-    private Environment environment = globals;
+    final   Environment globals             = new Environment();
+    private Environment environment         = globals;
+    private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
         globals.define("clock", new LoxCallable() {
@@ -85,7 +88,14 @@ class Interpreter implements    Expr.Visitor<Object>,
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-        environment.assign(expr.name, value);
+
+        Integer distance = locals.get(expr);
+        if(distance != null) {
+            environment.assignAt(distance, expr.name, value);
+        } else {
+            globals.assign(expr.name, value);
+        }
+
         return value;
     }
 
@@ -94,7 +104,17 @@ class Interpreter implements    Expr.Visitor<Object>,
     * */
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name);
+        return lookUpVariable(expr.name, expr);
+    }
+
+    private Object lookUpVariable(Token name, Expr expr) {
+        Integer distance = locals.get(expr);
+
+        if  (distance != null) {
+            return environment.getAt(distance, name.lexeme);
+        } else {
+            return globals.get(name);
+        }
     }
 
     @Override
@@ -293,6 +313,34 @@ class Interpreter implements    Expr.Visitor<Object>,
 
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+
+    /* Interpreting Resolved Variables
+    *
+    * Each time the Resolver visits a variable it tells the interpreter
+    * how many scopes (@depth) there are between the current scope and the scope
+    * where the variable is defined. At runtime, this corresponds exactly
+    * to the number of Environments between the current one and the enclosing
+    * one where the interpreter can find the variable's value. The Resolver
+    * pass that number to the Interpreters own resolve() function. We store
+    * the resolution information(Map<expr, depthOfScope as Integer>) in the
+    * side table @locals.
+    *
+    * There is no need for a special structure or naming approach to avoid
+    * getting confused when there are multiple expressions that reference the
+    * same variable. This is because each Expr Node is its own Java Object with
+    * its unique identity.
+    *
+    * Note: Alternative place to store that resolution information is right
+    * in the syntax tree node itself. In complex tools like IDEs that often
+    * re-parse and re-resolve parts of the program frequently it may be hard to
+    * find all bits of state that needs to recalculated from the syntax tree.
+    * A benefit of storing the resolution data outside the nodes is that it is
+    * easy to discard it by just clearing the map.
+    * */
+    void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
     }
 
     @Override
