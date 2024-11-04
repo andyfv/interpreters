@@ -21,10 +21,12 @@ itself again, and again, and again until we get a stack overflow.
 Grammar(ordered from the least to the highest precedence, e.g. top-down parser):
 ===========================================================
 program     -> declaration* EOF ;
-declaration -> funDecl
+declaration -> classDecl
+             | funDecl
              | varDecl
              | statement
              ;
+classDecl   -> "class" IDENTIFIER "{" function* "}" ;
 funDecl     -> "fun" function ;
 function    -> IDENTIFIER "(" parameters? ")" block ;           // IDENTIFIER is the name of the function
 parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;                 // IDENTIFIER is a name for optional one or more parameters
@@ -237,6 +239,7 @@ public class Parser {
 
     private Stmt declaration() {
         try {
+        if (match(CLASS)) return classDeclaration();
             if (check(FUN) && checkNext(IDENTIFIER))  {
                 consume(FUN, null);
                 return function("function");
@@ -247,6 +250,19 @@ public class Parser {
             synchronize();
             return null;
         }
+    }
+
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect class name.");
+        consume(LEFT_BRACE, "Expect '{' before class body");
+
+        List<Stmt.Function> methods = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd())
+            methods.add(function("method"));
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+        return new Stmt.Class(name, methods);
+
     }
 
     private boolean checkNext(TokenType tokenType) {

@@ -349,6 +349,14 @@ class Interpreter implements    Expr.Visitor<Object>,
         return null;
     }
 
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, null);     // Define the class name in current environment
+        LoxClass klass = new LoxClass(stmt.name.lexeme);      // Transform the class node -> LoxClass (runtime representation of a class).
+        environment.assign(stmt.name, klass);                 // Store the class object in the variable we previously declared.
+        return null;
+    }
+
     void executeBlock(List<Stmt> statements, Environment environment) {
         Environment previous = this.environment;    // Hold on to the outer scope
         try {

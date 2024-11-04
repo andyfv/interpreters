@@ -29,6 +29,7 @@ public class GenerateAst {
         // Statement nodes
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Block      : List<Stmt> statements",
+                "Class      : Token name, List<Stmt.Function> methods",
                 "Expression : Expr expression",
                 "Function   : Token name, Expr.Function function",
                 "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
