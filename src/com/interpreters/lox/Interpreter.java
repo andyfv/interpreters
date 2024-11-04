@@ -277,6 +277,16 @@ class Interpreter implements    Expr.Visitor<Object>,
         return function.call(this, arguments);
     }
 
+    @Override
+    public Object visitGetEXpr(Expr.Get expr) {
+        Object object = evaluate(expr.object);
+        if (object instanceof LoxInstance) {
+            return ((LoxInstance) object).get(expr.name);
+        }
+
+        throw new RuntimeError(expr.name, "Only instances have properties.");
+    }
+
     // Operand checker for Unary expressions
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double) return;

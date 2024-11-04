@@ -14,6 +14,8 @@ abstract class Expr {
 
         R visitCallExpr(Call expr);
 
+        R visitGetExpr(Get expr);
+
         R visitGroupingExpr(Grouping expr);
 
         R visitLiteralExpr(Literal expr);
@@ -90,6 +92,22 @@ abstract class Expr {
         @Override
         <R> R accept(Visitor<R> visitor) {
             return visitor.visitCallExpr(this);
+        }
+    }
+
+    static class Get extends Expr {
+
+        final Expr object;
+        final Token name;
+
+        Get(Expr object, Token name) {
+            this.object = object;
+            this.name = name;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitGetExpr(this);
         }
     }
 
