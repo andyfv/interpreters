@@ -51,7 +51,7 @@ whileStmt   -> "while" "(" expression ")" statement ;
 block       -> "{" declaration* "}" ;
 
 expression  -> assignment ;
-assignment  -> IDENTIFIER "=" assignment
+assignment  -> ( call "." )? IDENTIFIER "=" assignment
              | logic_or
              ;
 logic_or    -> logic_and ( "or" logic_and )* ;
@@ -310,6 +310,9 @@ public class Parser {
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable)expr).name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof Expr.Get) {                  // Parse the left-hand side as a normal expression.
+                Expr.Get get = (Expr.Get)expr;                      // If we stumble onto '=' we take the expression and
+                return new Expr.Set(get.object, get.name, value);   // transform it to the correct syntax node - Expr.Set
             }
 
             error(equals, "Invalid assignment target.");

@@ -287,6 +287,20 @@ class Interpreter implements    Expr.Visitor<Object>,
         throw new RuntimeError(expr.name, "Only instances have properties.");
     }
 
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+
+        if (!(object instanceof LoxInstance)) {
+            throw new RuntimeError(expr.name, "Only instances have fields");
+        }
+
+        Object value = evaluate(expr.value);
+        ((LoxInstance)object).set(expr.name, value);
+
+        return value;
+    }
+
     // Operand checker for Unary expressions
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double) return;
