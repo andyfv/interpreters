@@ -69,6 +69,7 @@ primary     -> "true"
              | NUMBER | STRING |
              | "(" expression ")"
              | IDENTIFIER
+             | "this"
              ;
 ===========================================================
 
@@ -459,6 +460,7 @@ public class Parser {
         if (match(NIL))             return new Expr.Literal(null);
         if (match(NUMBER, STRING))  return new Expr.Literal(previous().literal);
         if (match(IDENTIFIER))      return new Expr.Variable(previous());
+//        if (match(THIS))            return new
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression.");

@@ -1,5 +1,6 @@
 package com.interpreters.lox;
 
+import java.awt.event.WindowStateListener;
 import java.util.List;
 
 class LoxFunction implements LoxCallable {
@@ -11,6 +12,12 @@ class LoxFunction implements LoxCallable {
         this.declaration    = declaration;
         this.closure        = closure;
         this.name           = name;
+    }
+
+    LoxFunction bind(LoxInstance instance) {
+        Environment environment = new Environment(closure);
+        environment.define("this", instance);
+        return new LoxFunction(name, declaration, environment);
     }
 
     // Returns null in case the function doesn't return anything

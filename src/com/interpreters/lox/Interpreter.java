@@ -301,6 +301,11 @@ class Interpreter implements    Expr.Visitor<Object>,
         return value;
     }
 
+    @Override
+    public Object visitThisExpr(Expr.This expr) {
+        return lookUpVariable(expr.keyword, expr);
+    }
+
     // Operand checker for Unary expressions
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double) return;
