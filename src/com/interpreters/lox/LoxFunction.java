@@ -35,9 +35,9 @@ class LoxFunction implements LoxCallable {
         // Catch a 'return' statement from the function call
         try {
             interpreter.executeBlock(declaration.body, environment);
-        } catch (Return returnValue) {
-            return returnValue.value;
-        }
+        } catch (Return returnValue) {                                             // If try to return from an 'init'
+            if (isInitializer) return closure.getAt(0, "this");     // method, we return the instance
+        }                                                                         // instead of returning a value
 
         if (isInitializer) return closure.getAt(0,"this");
 
