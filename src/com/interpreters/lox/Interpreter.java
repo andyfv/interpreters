@@ -382,15 +382,30 @@ class Interpreter implements    Expr.Visitor<Object>,
     public Void visitClassStmt(Stmt.Class stmt) {
         environment.define(stmt.name.lexeme, null);     // Define the class name in current environment
 
-        Map<String, LoxFunction> methods = new HashMap<>();
+        /* Class methods*/
+        Map<String, LoxFunction> classMethods = new HashMap<>();
 
+        for (Stmt.Function method : stmt.classMethods) {
+            String methodName = method.name.lexeme;
+            LoxFunction function = new LoxFunction(methodName, method.function, environment, false);
+            classMethods.put(methodName, function);
+        }
+
+        LoxClass metaclass = new LoxClass(null, stmt.name.lexeme + " metaclass", classMethods);
+
+        /*****************************************************************/
+
+        /* Instance methods */
+        Map<String, LoxFunction> instMethods = new HashMap<>();
         for (Stmt.Function method : stmt.methods) {
             String methodName = method.name.lexeme;
             LoxFunction function = new LoxFunction(methodName, method.function, environment, methodName.equals("init"));
-            methods.put(methodName, function);
+            instMethods.put(methodName, function);
         }
 
-        LoxClass klass = new LoxClass(stmt.name.lexeme, methods);      // Transform the class node -> LoxClass (runtime representation of a class).
+        // Transform the Class node to LoxClass (it's runtime representation of a class).
+        LoxClass klass = new LoxClass(metaclass, stmt.name.lexeme, instMethods);
+
         environment.assign(stmt.name, klass);                 // Store the class object in the variable we previously declared.
         return null;
     }

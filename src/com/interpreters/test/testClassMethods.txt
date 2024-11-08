@@ -1,7 +1,7 @@
-class Bacon {
-    eat() {
-        print "Crunch crunch crunch!";
+class Math {
+    class square(n) {
+        return n * n;
     }
 }
 
-Bacon().eat();
+print Math.square(3); // Prints "9"

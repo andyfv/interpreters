@@ -86,12 +86,19 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
                                                 // a "local variable" defined in an implicit scope just
                                                 // outside of the block for the method body
 
-        for (Stmt.Function method : stmt.methods) {
+        for (Stmt.Function method : stmt.methods) {                 // Resolve instance methods
             FunctionType declaration = FunctionType.METHOD;
 
             if (method.name.lexeme.equals("init")) declaration = FunctionType.INITIALIZER;
 
             resolveFunction(method.function, declaration);
+        }
+
+        for (Stmt.Function classMethod : stmt.classMethods) {       // Resolve class methods
+            beginScope();
+            scopes.peek().put("this", true);        // 'this' refers to the class itself
+            resolveFunction(classMethod.function, FunctionType.METHOD);
+            endScope();
         }
 
         endScope();
