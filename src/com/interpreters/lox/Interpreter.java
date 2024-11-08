@@ -126,7 +126,7 @@ class Interpreter implements    Expr.Visitor<Object>,
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
         String fnName = stmt.name.lexeme;
-        environment.define(fnName, new LoxFunction(fnName, stmt.function, environment));
+        environment.define(fnName, new LoxFunction(fnName, stmt.function, environment, false));
         return null;
     }
 
@@ -249,7 +249,7 @@ class Interpreter implements    Expr.Visitor<Object>,
 
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        return new LoxFunction(null, expr, environment);
+        return new LoxFunction(null, expr, environment, false);
     }
 
     @Override
@@ -385,8 +385,9 @@ class Interpreter implements    Expr.Visitor<Object>,
         Map<String, LoxFunction> methods = new HashMap<>();
 
         for (Stmt.Function method : stmt.methods) {
-            LoxFunction function = new LoxFunction(method.name.lexeme, method.function, environment);
-            methods.put(method.name.lexeme, function);
+            String methodName = method.name.lexeme;
+            LoxFunction function = new LoxFunction(methodName, method.function, environment, methodName.equals("init"));
+            methods.put(methodName, function);
         }
 
         LoxClass klass = new LoxClass(stmt.name.lexeme, methods);      // Transform the class node -> LoxClass (runtime representation of a class).

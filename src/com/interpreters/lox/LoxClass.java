@@ -20,15 +20,28 @@ class LoxClass implements LoxCallable {
         return null;
     }
 
+    /* Here is where class instances are created
+        1) Create class instance(object)
+        2) Check to see if there is 'init' (initializor) method
+            2.1) If there is a 'init' method bind it with the instance and
+                    invoke it like a normal method
+        3) Return the instance
+    * */
     @Override
     public Object call(Interpreter interpreter, List<Object> arguments) {
         LoxInstance instance = new LoxInstance(this);
+
+        LoxFunction initializer = findMethod("init");
+        if (initializer != null) initializer.bind(instance).call(interpreter, arguments);
+
         return instance;
     }
 
     @Override
     public int arity() {
-        return 0;
+        LoxFunction initializer = findMethod("init");
+        if (initializer == null) return 0;
+        return initializer.arity();
     }
 
     @Override
