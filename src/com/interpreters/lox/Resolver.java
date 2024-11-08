@@ -31,6 +31,8 @@
 
 package com.interpreters.lox;
 
+import com.sun.source.tree.ClassTree;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,8 @@ import java.util.Stack;
 class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
     private final Stack<Map<String, Boolean>> scopes = new Stack<>();
-    private FunctionType currentFunction = FunctionType.NONE;
+    private FunctionType    currentFunction = FunctionType.NONE;
+    private ClassType       currentClass    = ClassType.NONE;
 
     Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
@@ -49,6 +52,11 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         { NONE
         , FUNCTION
         , METHOD
+        }
+
+    private enum ClassType
+        { NONE
+        , CLASS
         }
 
     // VISIT METHODS
@@ -65,6 +73,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        ClassType encolsingClass = currentClass;
+        currentClass = ClassType.NONE;
+
         declare(stmt.name);
         define(stmt.name);
 
@@ -80,6 +91,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
 
         endScope();
+
+        currentClass = encolsingClass;
 
         return null;
     }
@@ -247,6 +260,11 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class");
+            return null;
+        }
+
         resolveLocal(expr, expr.keyword);
         return null;
     }
