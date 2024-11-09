@@ -74,17 +74,20 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
-        ClassType encolsingClass = currentClass;
-        currentClass = ClassType.NONE;
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
 
         declare(stmt.name);
         define(stmt.name);
 
-        beginScope();                           // Push a new scope and define "this" in it as if
-        scopes.peek().put("this", true);        // were a variable. This way when a "this" expression
-                                                // is encountered inside a function it will resolve to
-                                                // a "local variable" defined in an implicit scope just
-                                                // outside of the block for the method body
+        /* Push a new scope and define "this" in it as if it
+        * were a variable. This way when a "this" expression
+        * is encountered inside a function it will resolve to
+        * a "local variable" defined in an implicit scope just
+        * outside of the block for the method body
+        * */
+        beginScope();
+        scopes.peek().put("this", true);
 
         for (Stmt.Function method : stmt.methods) {                 // Resolve instance methods
             FunctionType declaration = FunctionType.METHOD;
@@ -96,14 +99,14 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
         for (Stmt.Function classMethod : stmt.classMethods) {       // Resolve class methods
             beginScope();
-            scopes.peek().put("this", true);        // 'this' refers to the class itself
+            scopes.peek().put("this", true);                        // 'this' refers to the class itself
             resolveFunction(classMethod.function, FunctionType.METHOD);
             endScope();
         }
 
         endScope();
 
-        currentClass = encolsingClass;
+        currentClass = enclosingClass;
 
         return null;
     }
