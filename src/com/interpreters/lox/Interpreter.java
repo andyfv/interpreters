@@ -380,6 +380,14 @@ class Interpreter implements    Expr.Visitor<Object>,
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        Object superclass = null;
+        if (stmt.superclass != null) {
+            superclass = evaluate(stmt.superclass);         // Evaluate the superclass object
+            if (!(superclass instanceof LoxClass)) {        // Check if the evaluated superclass is actually a class
+                throw new RuntimeError(stmt.superclass.name, "Superclass must be a class");
+            }
+        }
+
         environment.define(stmt.name.lexeme, null);     // Define the class name in current environment
 
         /* Class methods*/
@@ -391,7 +399,10 @@ class Interpreter implements    Expr.Visitor<Object>,
             classMethods.put(methodName, function);
         }
 
-        LoxClass metaclass = new LoxClass(null, stmt.name.lexeme + " metaclass", classMethods);
+        LoxClass metaclass = new LoxClass(null
+                                         , stmt.name.lexeme + " metaclass"
+                                         , ((LoxClass)superclass).superclass
+                                         , classMethods);
 
         /*****************************************************************/
 
@@ -404,7 +415,7 @@ class Interpreter implements    Expr.Visitor<Object>,
         }
 
         // Transform the Class node to LoxClass (it's runtime representation of a class).
-        LoxClass klass = new LoxClass(metaclass, stmt.name.lexeme, instMethods);
+        LoxClass klass = new LoxClass(metaclass, stmt.name.lexeme, (LoxClass) superclass, instMethods);
 
         environment.assign(stmt.name, klass);                 // Store the class object in the variable we previously declared.
         return null;

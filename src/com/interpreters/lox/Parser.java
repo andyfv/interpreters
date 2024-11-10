@@ -26,7 +26,8 @@ declaration -> classDecl
              | varDecl
              | statement
              ;
-classDecl   -> "class" IDENTIFIER "{" function* "}" ;
+classDecl   -> "class" IDENTIFIER ( "<" IDENTIFIER )?
+               "{" function* "}" ;
 funDecl     -> "fun" function ;
 function    -> IDENTIFIER "(" parameters? ")" block ;           // IDENTIFIER is the name of the function
 parameters  -> IDENTIFIER ( "," IDENTIFIER )* ;                 // IDENTIFIER is a name for optional one or more parameters
@@ -256,6 +257,12 @@ public class Parser {
 
     private Stmt classDeclaration() {
         Token name = consume(IDENTIFIER, "Expect class name.");
+        Expr.Variable superclass = null;
+
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.");
+            superclass = new Expr.Variable(previous());
+        }
 
         List<Stmt.Function> methods      = new ArrayList<>();
         List<Stmt.Function> classMethods = new ArrayList<>();
@@ -268,7 +275,7 @@ public class Parser {
         }
 
         consume(RIGHT_BRACE, "Expect '}' after class body.");
-        return new Stmt.Class(name, methods, classMethods);
+        return new Stmt.Class(name, superclass, methods, classMethods);
     }
 
     private boolean checkNext(TokenType tokenType) {

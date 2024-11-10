@@ -80,6 +80,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         declare(stmt.name);
         define(stmt.name);
 
+        if (stmt.superclass != null && stmt.name.lexeme.equals(stmt.superclass.name.lexeme)) {
+            Lox.error(stmt.superclass.name, "A class can't inherit from itself");
+        }
+
+        if (stmt.superclass != null) resolve(stmt.superclass);
+
         /* Push a new scope and define "this" in it as if it
         * were a variable. This way when a "this" expression
         * is encountered inside a function it will resolve to
