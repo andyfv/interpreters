@@ -20,9 +20,8 @@ class LoxClass extends LoxInstance implements LoxCallable {
     }
 
     LoxFunction findMethod(String name) {
-        if (methods.containsKey(name)) {
-            return methods.get(name);
-        }
+        if (methods.containsKey(name))  return methods.get(name);
+        if (superclass != null)         return superclass.findMethod(name);     // Check superclass methods
 
         return null;
     }
