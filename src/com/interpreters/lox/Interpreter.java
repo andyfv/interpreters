@@ -388,6 +388,8 @@ class Interpreter implements    Expr.Visitor<Object>,
             }
         }
 
+        superclass = (superclass != null) ? (LoxClass)superclass : null;
+
         environment.define(stmt.name.lexeme, null);     // Define the class name in current environment
 
         /* Class methods*/
@@ -401,7 +403,7 @@ class Interpreter implements    Expr.Visitor<Object>,
 
         LoxClass metaclass = new LoxClass(null
                                          , stmt.name.lexeme + " metaclass"
-                                         , ((LoxClass)superclass).superclass
+                                         , (superclass != null) ? ((LoxClass) superclass).superclass : null
                                          , classMethods);
 
         /*****************************************************************/
