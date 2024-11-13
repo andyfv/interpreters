@@ -277,6 +277,8 @@ class Interpreter implements    Expr.Visitor<Object>,
         return function.call(this, arguments);
     }
 
+
+    /* Instance property access */
     @Override
     public Object visitGetExpr(Expr.Get expr) {
         Object object = evaluate(expr.object);
@@ -299,6 +301,27 @@ class Interpreter implements    Expr.Visitor<Object>,
         ((LoxInstance)object).set(expr.name, value);
 
         return value;
+    }
+
+
+    @Override
+    public Object visitSuperExpr (Expr.Super expr) {
+        int distance = locals.get(expr);
+        LoxClass superclass = (LoxClass)environment.getAt(distance, "super");
+
+        /* When accessing a method we also need to bind 'this' to the object
+         * the method os accessed from.
+         * */
+        LoxInstance object  = (LoxInstance)environment.getAt(distance - 1, "this");
+
+        /* Now we can look up and bind the method, starting from the superclass */
+        LoxFunction method = superclass.findMethod(expr.method.lexeme);
+
+        if (method == null) {
+            throw new RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+        }
+
+        return method.bind(object);
     }
 
     @Override
@@ -392,6 +415,14 @@ class Interpreter implements    Expr.Visitor<Object>,
 
         environment.define(stmt.name.lexeme, null);     // Define the class name in current environment
 
+        /* Add 'superclass' closure (environment) if the class has a superclass
+        *   Inside that closure we store a reference to the superclass
+        * */
+        if (stmt.superclass != null) {
+            environment = new Environment(environment);
+            environment.define("super", superclass);
+        }
+
         /* Class methods*/
         Map<String, LoxFunction> classMethods = new HashMap<>();
 
@@ -419,7 +450,11 @@ class Interpreter implements    Expr.Visitor<Object>,
         // Transform the Class node to LoxClass (it's runtime representation of a class).
         LoxClass klass = new LoxClass(metaclass, stmt.name.lexeme, (LoxClass) superclass, instMethods);
 
-        environment.assign(stmt.name, klass);                 // Store the class object in the variable we previously declared.
+        // Once we are done with creating a LoxFunction for each method we can pop the
+        // additional closure holding the superclass reference.
+        if (superclass != null) environment = environment.enclosing;
+
+        environment.assign(stmt.name, klass);       // Store the class object in the variable we previously declared.
         return null;
     }
 

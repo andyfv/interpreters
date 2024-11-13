@@ -72,6 +72,22 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
+
+    /* Class resolvement
+    *
+    * A Class with superclass have the following closure (environment) structure
+    *
+    *   |-------------------------------|
+    *   |   Superclass closure          |   <- superclass   is bound to a  class  at compile time
+    *   |   |-----------------------|   |
+    *   |   |   'this' closure      |   |   <- 'this'       is bound to an object at runtime
+    *   |   |   |---------------|   |   |
+    *   |   |   |   method      |   |   |
+    *   |   |   |   body        |   |   |
+    *   |   |   |---------------|   |   |
+    *   |   |-----------------------|   |
+    *   |-------------------------------|
+    * */
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         ClassType enclosingClass = currentClass;
@@ -86,13 +102,18 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
         if (stmt.superclass != null) resolve(stmt.superclass);
 
+        if (stmt.superclass != null) {                              // Open 'superclass' closure
+            beginScope();
+            scopes.peek().put("super", true);
+        }
+
         /* Push a new scope and define "this" in it as if it
         * were a variable. This way when a "this" expression
         * is encountered inside a function it will resolve to
         * a "local variable" defined in an implicit scope just
         * outside of the block for the method body
         * */
-        beginScope();
+        beginScope();                                               // Open 'this' closure
         scopes.peek().put("this", true);
 
         for (Stmt.Function method : stmt.methods) {                 // Resolve instance methods
@@ -110,7 +131,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             endScope();
         }
 
-        endScope();
+        endScope();                                                 // Close 'this' closure
+
+        if (stmt.superclass != null) endScope();                    // Close 'superclass' closure
 
         currentClass = enclosingClass;
 
@@ -280,6 +303,17 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     public Void visitSetExpr (Expr.Set expr) {
         resolve(expr.value);
         resolve(expr.object);
+        return null;
+    }
+
+
+    /*Resolve the 'super' token as a variable and store the number
+    * of environments in the environment chain where the superclass
+    * is defined
+    * */
+    @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
